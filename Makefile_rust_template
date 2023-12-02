@@ -1,5 +1,5 @@
-bin: $(wildcard *.rs)
+bin: $(wildcard *-curr.rs)
 	rustc $? -o bin
 
-test: $(wildcard *.rs)
+test: $(wildcard *-curr.rs)
 	rustc $? -o test --test
