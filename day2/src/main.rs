@@ -1,5 +1,5 @@
-mod cubes;
+mod cubes2;
 
 fn main() {
-    cubes::main();
+    cubes2::main();
 }
