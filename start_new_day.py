@@ -29,9 +29,9 @@ def main():
 
   os.mkdir(day_name)
   if args.problem_name is not None:
-    code_path = os.path.join(day_name, f'{args.problem_name}.rs')
+    code_path = os.path.join(day_name, f'{args.problem_name}-curr.rs')
   else:
-    code_path = os.path.join(day_name, f'{day_name}.rs')
+    code_path = os.path.join(day_name, f'{day_name}-curr.rs')
   shutil.copyfile(args.code_template, code_path)
   makefile_path = os.path.join(day_name, 'Makefile')
   shutil.copyfile(args.makefile_template, makefile_path)
