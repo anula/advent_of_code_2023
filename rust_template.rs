@@ -1,5 +1,5 @@
 use std::cmp::{max, min};
-use std::io::{BufRead, Write};
+use std::io::{BufRead, BufReader, Write};
 
 /// UnsafeScanner is from https://github.com/EbTech/rust-algorithms/blob/master/src/scanner.rs
 pub struct UnsafeScanner<R> {
@@ -44,15 +44,25 @@ macro_rules! dprintln {
 }
 
 fn solve<R: BufRead, W: Write>(mut input: R, mut output: W) {
-    let mut scan = UnsafeScanner::new(input);
-    let zet = scan.token::<usize>();
+    // AoC typical IO.
+    let mut solution: i64 = 0;
 
-    for _ in 0..zet {
-        writeln!(output, "10 11 20").unwrap();
+    for line_res in BufReader::new(input).lines() {
     }
+
+    writeln!(output, "{}", solution).unwrap();
+
+
+    // Codeforces typical IO.
+    //let mut scan = UnsafeScanner::new(input);
+    //let zet = scan.token::<usize>();
+
+    //for _ in 0..zet {
+    //    writeln!(output, "10 11 20").unwrap();
+    //}
 }
 
-fn main() {
+pub fn main() {
     let stdin = std::io::stdin();
     let stdout = std::io::stdout();
     solve(stdin.lock(), stdout.lock());
@@ -60,15 +70,17 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     fn test_exact(input: &str, output: &str) {
         let mut actual_out: Vec<u8> = Vec::new();
-        ::solve(input.as_bytes(), &mut actual_out);
+        solve(input.as_bytes(), &mut actual_out);
         assert_eq!(String::from_utf8(actual_out).unwrap(), output);
     }
 
     fn test_ignore_whitespaces(input: &str, output: &str) {
         let mut actual_out: Vec<u8> = Vec::new();
-        ::solve(input.as_bytes(), &mut actual_out);
+        solve(input.as_bytes(), &mut actual_out);
         let actual_out_str = String::from_utf8(actual_out).unwrap();
         let actual_outs = actual_out_str.split_whitespace().collect::<Vec<&str>>();
         let expected_outs = output.split_whitespace().collect::<Vec<&str>>();
@@ -79,7 +91,7 @@ mod tests {
     fn sample() {
         test_ignore_whitespaces(
             "1",
-            "10\n11 20",
+            "0",
         );
     }
 
@@ -87,22 +99,11 @@ mod tests {
     fn test_test_functions() {
         test_ignore_whitespaces(
             "1",
-            "10\n11 20",
-        );
-        test_ignore_whitespaces(
-            "1",
-            "10
-            11\n 20",
-        );
-        test_ignore_whitespaces(
-            "1",
-            "10 
-            11\n 
-            20",
+            "0",
         );
         test_exact(
             "1",
-            "10 11 20\n",
+            "0\n",
         );
     }
 }
