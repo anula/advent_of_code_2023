@@ -1,5 +1,5 @@
-mod scratchcards;
+mod scratchcards2;
 
 fn main() {
-    scratchcards::main();
+    scratchcards2::main();
 }
