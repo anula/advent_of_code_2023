@@ -1,5 +1,5 @@
-mod almanac;
+mod almanac2;
 
 fn main() {
-    almanac::main();
+    almanac2::main();
 }
