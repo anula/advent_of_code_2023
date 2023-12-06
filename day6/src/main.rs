@@ -1,5 +1,5 @@
-mod races;
+mod races2;
 
 fn main() {
-    races::main();
+    races2::main();
 }
