@@ -1,5 +1,5 @@
-mod camel_cards;
+mod camel_cards2;
 
 fn main() {
-    camel_cards::main();
+    camel_cards2::main();
 }
