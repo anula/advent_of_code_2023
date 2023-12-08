@@ -16,3 +16,6 @@ Cargo.lock
 # Self generated binaries
 bin
 test
+
+# input
+input
