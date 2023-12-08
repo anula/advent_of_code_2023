@@ -22,8 +22,15 @@ parser.add_argument('-mt', '--makefile_template', type=str,
 parser.add_argument('--cargo', action='store_true',
                     default=False,
                     help='If use cargo instead of Makefiles')
+parser.add_argument('--lib', action='store_true',
+                    default=False,
+                    help='When true, also copies over the library of codes.')
+parser.add_argument('--lib_file', type=str,
+                    default='biblioteczka.rs',
+                    help='File to use for the library of codes')
 
 CARGO_MAIN_TEMPLATE = """mod {problem_name};
+{code_lib}
 
 fn main() {{
     {problem_name}::main();
@@ -40,15 +47,22 @@ def makefile_based(day_name: str, problem_name: str, code_template: str,
   shutil.copyfile(makefile_template, makefile_path)
 
 
-def cargo_based(day_name: str, problem_name: str, code_template: str):
+def cargo_based(day_name: str, problem_name: str, code_template: str,
+                lib: bool, lib_file: str):
   subprocess.run(['cargo', 'new', day_name, '--bin'], check=True)
   src_path = os.path.join(day_name, 'src')
   main_path = os.path.join(src_path, 'main.rs')
   problem_path = os.path.join(src_path, f'{problem_name}.rs')
+  lib_import = f'mod {lib_file[:-len(".rs")]};' if lib else ''
 
   shutil.copyfile(code_template, problem_path)
   with open(main_path, 'w') as mf:
-    mf.write(CARGO_MAIN_TEMPLATE.format(problem_name = problem_name))
+    mf.write(CARGO_MAIN_TEMPLATE.format(
+      problem_name = problem_name, code_lib = lib_import))
+
+  if lib:
+    lib_path = os.path.join(src_path, lib_file)
+    shutil.copyfile(lib_file, lib_path)
 
 
 def main():
@@ -66,7 +80,8 @@ def main():
     makefile_based(day_name, problem_name, args.code_template,
                    args.makefile_template)
   else:
-    cargo_based(day_name, problem_name, args.code_template)
+    cargo_based(day_name, problem_name, args.code_template, args.lib,
+                args.lib_file)
 
 
 if __name__ == "__main__":
