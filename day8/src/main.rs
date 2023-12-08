@@ -1,5 +1,6 @@
-mod wasteland;
+mod wasteland2;
+mod biblioteczka;
 
 fn main() {
-    wasteland::main();
+    wasteland2::main();
 }
