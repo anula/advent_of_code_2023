@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 
 import argparse
+import json
 import os
+import requests
 import shutil
 import subprocess
 
@@ -28,6 +30,12 @@ parser.add_argument('--lib', action='store_true',
 parser.add_argument('--lib_file', type=str,
                     default='biblioteczka.rs',
                     help='File to use for the library of codes')
+parser.add_argument('--input_url', type=str,
+                    default='https://adventofcode.com/2023/day/{day_number}/input',
+                    help='Template of the URL to download input from')
+parser.add_argument('--secrets', type=str,
+                    default='secrets.json',
+                    help='JSON file with secrets, eg. for login')
 
 CARGO_MAIN_TEMPLATE = """mod {problem_name};
 {code_lib}
@@ -65,6 +73,36 @@ def cargo_based(day_name: str, problem_name: str, code_template: str,
     shutil.copyfile(lib_file, lib_path)
 
 
+def parse_secrets(secrets_file: str):
+  with open(secrets_file) as f:
+    return json.load(f)
+
+
+def download_input(
+    website_tmpl: str, session_token: str, day_num: int, dest_dir: str):
+  dest_path = os.path.join(dest_dir, 'input')
+
+  failed = False
+  try:
+    resp = requests.get(website_tmpl.format(day_number=day_num),
+                        cookies={'session': session_token},
+                        headers={'User-Agent': 'custom script'})
+  except requests.ConnectionError as err:
+    failed = True
+    reason = err
+
+  if not resp.ok:
+    failed = True
+    reason = resp.reason
+
+  if failed:
+    print(f'Failed to download input, reason: {reason}')
+
+  with open(dest_path, 'wb') as f:
+    f.write(resp.content)
+
+
+
 def main():
   args = parser.parse_args()
 
@@ -82,6 +120,10 @@ def main():
   else:
     cargo_based(day_name, problem_name, args.code_template, args.lib,
                 args.lib_file)
+
+  secrets = parse_secrets(args.secrets)
+  download_input(
+    args.input_url, secrets['aoc_session'], args.day_number, day_name)
 
 
 if __name__ == "__main__":
