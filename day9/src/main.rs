@@ -1,6 +1,6 @@
-mod oasis;
+mod oasis2;
 
 
 fn main() {
-    oasis::main();
+    oasis2::main();
 }
