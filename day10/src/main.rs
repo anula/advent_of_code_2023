@@ -1,6 +1,6 @@
-mod maze2;
+mod maze2easier;
 
 
 fn main() {
-    maze2::main();
+    maze2easier::main();
 }
