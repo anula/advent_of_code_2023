@@ -67,13 +67,13 @@ impl GalaxyMap {
         }
     }
 
-    fn expand(&mut self) {
+    fn expand(&mut self, expansion_ratio: usize) {
         let mut row_idx = 0;
         for g in &mut self.galaxies {
             while row_idx < self.empty_rows.len() && g.y > self.empty_rows[row_idx] {
                 row_idx += 1;
             }
-            g.y += row_idx * (1000000 - 1);
+            g.y += row_idx * (expansion_ratio- 1);
         }
 
         self.galaxies.sort_by_key(|g| g.x);
@@ -83,7 +83,7 @@ impl GalaxyMap {
             while col_idx < self.empty_columns.len() && g.x > self.empty_columns[col_idx] {
                 col_idx += 1;
             }
-            g.x += col_idx * (1000000 - 1);
+            g.x += col_idx * (expansion_ratio - 1);
         }
     }
 
@@ -105,7 +105,7 @@ fn solve<R: BufRead, W: Write>(input: R, mut output: W) {
     let lines_it = BufReader::new(input).lines().map(|l| l.unwrap());
     let mut galaxy_map = GalaxyMap::from_input(lines_it);
     dprintln!("Map: {:?}", galaxy_map);
-    galaxy_map.expand();
+    galaxy_map.expand(1000000);
     dprintln!("Expanded: {:?}", galaxy_map);
 
     writeln!(output, "{}", galaxy_map.sum_distances()).unwrap();
