@@ -35,15 +35,13 @@ impl Cache {
 
 #[derive(Debug)]
 struct Solution {
-    dot_cache: Cache,
-    hash_cache: Cache,
+    cache: Cache,
 }
 
 impl Solution {
     fn new() -> Solution {
         Solution {
-            dot_cache: Cache::new(),
-            hash_cache: Cache::new(),
+            cache: Cache::new(),
         }
     }
 
@@ -75,27 +73,10 @@ impl Solution {
         self.arrangements(&chars[1..], to_fit, hashes)
     }
 
-    fn handle_dot_cached(&mut self, chars: &[char], to_fit: &[usize], prefix_hashes: usize) -> i64 {
-        if let Some(v) = self.dot_cache.cached(chars, to_fit, prefix_hashes) {
-            v
-        } else {
-            let v = self.handle_dot(chars, to_fit, prefix_hashes);
-            self.dot_cache.insert(v, chars, to_fit, prefix_hashes);
-            v
-        }
-    }
-
-    fn handle_hash_cached(&mut self, chars: &[char], to_fit: &[usize], prefix_hashes: usize) -> i64 {
-        if let Some(v) = self.hash_cache.cached(chars, to_fit, prefix_hashes) {
-            v
-        } else {
-            let v = self.handle_hash(chars, to_fit, prefix_hashes);
-            self.hash_cache.insert(v, chars, to_fit, prefix_hashes);
-            v
-        }
-    }
-
     fn arrangements(&mut self, chars: &[char], to_fit: &[usize], prefix_hashes: usize) -> i64 {
+        if let Some(v) = self.cache.cached(chars, to_fit, prefix_hashes) {
+            return v;
+        }
         if to_fit.is_empty() {
             if chars.contains(&'#') {
                 return 0;
@@ -107,20 +88,22 @@ impl Solution {
             return 0;
         }
 
-        match chars[0] {
-            '.'=> self.handle_dot_cached(chars, to_fit, prefix_hashes),
-            '#'=> self.handle_hash_cached(chars, to_fit, prefix_hashes),
+        let result = match chars[0] {
+            '.'=> self.handle_dot(chars, to_fit, prefix_hashes),
+            '#'=> self.handle_hash(chars, to_fit, prefix_hashes),
             '?' => {
                 let mut sol = 0;
                 // it is dot
-                sol += self.handle_dot_cached(chars, to_fit, prefix_hashes);
+                sol += self.handle_dot(chars, to_fit, prefix_hashes);
                 // it is #
-                sol += self.handle_hash_cached(chars, to_fit, prefix_hashes);
+                sol += self.handle_hash(chars, to_fit, prefix_hashes);
 
                 sol
             },
             c @ _ => panic!("unexpected char: {}", c)
-        }
+        };
+        self.cache.insert(result, chars, to_fit, prefix_hashes);
+        result
     }
 }
 
