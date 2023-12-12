@@ -1,6 +1,6 @@
-mod springs;
+mod springs2;
 
 
 fn main() {
-    springs::main();
+    springs2::main();
 }
