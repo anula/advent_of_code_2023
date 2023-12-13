@@ -1,6 +1,6 @@
-mod palindrome;
+mod palindrome2;
 
 
 fn main() {
-    palindrome::main();
+    palindrome2::main();
 }
