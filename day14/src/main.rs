@@ -1,6 +1,6 @@
-mod dish;
+mod dish2;
 
 
 fn main() {
-    dish::main();
+    dish2::main();
 }
