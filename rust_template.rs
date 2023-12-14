@@ -47,7 +47,7 @@ fn solve<R: BufRead, W: Write>(mut input: R, mut output: W) {
     // AoC typical IO.
     let mut solution: i64 = 0;
 
-    for line_res in BufReader::new(input).lines() {
+    for line in BufReader::new(input).lines().map(|l| l.unwrap()) {
     }
 
     writeln!(output, "{}", solution).unwrap();
