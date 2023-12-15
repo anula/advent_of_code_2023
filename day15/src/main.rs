@@ -1,6 +1,6 @@
-mod lens;
+mod lens2;
 
 
 fn main() {
-    lens::main();
+    lens2::main();
 }
