@@ -84,9 +84,12 @@ def download_input(
 
   failed = False
   try:
-    resp = requests.get(website_tmpl.format(day_number=day_num),
-                        cookies={'session': session_token},
-                        headers={'User-Agent': 'custom script'})
+    resp = requests.get(
+      website_tmpl.format(day_number=day_num),
+      cookies={'session': session_token},
+      headers={
+        'User-Agent':
+        'https://github.com/anula/advent_of_code_2023 - auto-retrieve input'})
   except requests.ConnectionError as err:
     failed = True
     reason = err
