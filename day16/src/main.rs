@@ -1,6 +1,6 @@
-mod lava_floor;
+mod lava_floor2;
 
 
 fn main() {
-    lava_floor::main();
+    lava_floor2::main();
 }
