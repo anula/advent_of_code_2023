@@ -1,6 +1,6 @@
-mod crucible;
+mod crucible2;
 
 
 fn main() {
-    crucible::main();
+    crucible2::main();
 }

@@ -19,9 +19,12 @@ struct XY {
     y: i64,
 }
 
+#[allow(dead_code)]
 const UP: usize = 0;
 const RIGHT: usize = 1;
+#[allow(dead_code)]
 const DOWN: usize = 2;
+#[allow(dead_code)]
 const LEFT: usize = 3;
 
 impl XY {
@@ -97,7 +100,11 @@ impl Grid {
                 continue;
             }
 
-            if i == dir && len >= 3 {
+            if i != dir && len < 4 {
+                continue;
+            }
+
+            if i == dir && len >= 10 {
                 continue;
             }
             let potential = at.add(&diff);
@@ -107,7 +114,6 @@ impl Grid {
                 neighs.push((potential, new_dir, new_len));
             }
         }
-        dprintln!("neighs({:?}, {:?}, {:?}): {:?}", at, dir, len, neighs);
         neighs
     }
 
@@ -120,19 +126,23 @@ impl Grid {
             for y in 0..self.height() {
                 let mut line_str = String::new();
                 for x in 0..self.width() {
-                    line_str += "(";
-                    for len in 0..4 {
-                        if let Some(es) = dists.get(&(XY::new(x as i64, y as i64), len)) {
-                            if es[i] != i64::MAX {
-                                line_str += &format!(" {:03},", es[i]);
-                            } else {
-                                line_str += " MAX,";
+                    let mut node_str = String::new();
+                    node_str += "(";
+                    if x == 0 && y == 0 {
+                        node_str += "start";
+                    } else {
+                        for len in 0..=10 {
+                            if let Some(es) = dists.get(&(XY::new(x as i64, y as i64), len)) {
+                                if es[i] != i64::MAX {
+                                    node_str += &format!(" len:{:02}-{:03},", len, es[i]);
+                                } else {
+                                    node_str += &format!(" len:{:02}-MAX,", len);
+                                }
                             }
-                        } else {
-                            line_str += "   -,";
                         }
                     }
-                    line_str += ");";
+                    node_str += "); ";
+                    line_str += &format!("{: >30}", node_str);
                 }
                 dprintln!("{}", line_str);
             }
@@ -144,13 +154,13 @@ impl Grid {
 
         let mut heap = BinaryHeap::new();
         heap.push(State(0, start, RIGHT, 0));
-        for i in 0..4 {
+        heap.push(State(0, start, DOWN, 0));
+        for i in 0..=10 {
             distances.insert((start, i as i64), vec![0, 0, 0, 0]);
         }
 
         while let Some(State(dist, pos, dir, len)) = heap.pop() {
-            dprintln!("Got: {:?}, {:?}, {:?}, {}", dist, pos, dir, len);
-            if pos == goal {
+            if pos == goal && len >= 4 {
                 return dist;
             }
 
@@ -187,7 +197,6 @@ impl Grid {
 fn solve<R: BufRead, W: Write>(input: R, mut output: W) {
 
     let lines = BufReader::new(input).lines().map(|l| l.unwrap());
-    dprintln!("reading");
     let grid = Grid::from_input(lines);
     dprintln!("Grid: {:?}", grid);
 
@@ -232,27 +241,19 @@ mod tests {
             1224686865563
             2546548887735
             4322674655533",
-            "102",
+            "94",
         );
     }
 
     #[test]
-    fn mine() {
+    fn sample1() {
         test_ignore_whitespaces(
-            "9199999999999
-             9199999999999
-             9119999999999
-             9919911199999
-             9911919199999
-             9991119119999
-             9999999919999
-             9999999119999
-             9999999199999
-             9999999119999
-             9999999919999
-             9999999911199
-             9999999999111",
-            "30",
+            "111111111111
+            999999999991
+            999999999991
+            999999999991
+            999999999991",
+            "71",
         );
     }
 }
