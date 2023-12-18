@@ -1,6 +1,6 @@
-mod lagoon;
+mod lagoon2;
 
 
 fn main() {
-    lagoon::main();
+    lagoon2::main();
 }
