@@ -1,6 +1,5 @@
-mod aplenty;
-
+mod aplenty2;
 
 fn main() {
-    aplenty::main();
+    aplenty2::main();
 }
