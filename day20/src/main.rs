@@ -1,6 +1,6 @@
-mod pulse;
+mod pulse2;
 
 
 fn main() {
-    pulse::main();
+    pulse2::main();
 }
