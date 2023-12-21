@@ -1,7 +1,5 @@
-//use std::cmp::{max, min};
+use std::cmp::max;
 use std::io::{BufRead, BufReader, Write};
-use std::collections::HashSet;
-use std::collections::HashMap;
 use std::collections::VecDeque;
 
 #[allow(unused_macros)]
@@ -22,6 +20,7 @@ struct XY {
 
 impl XY {
     const fn new(x: i64, y: i64) -> XY { XY {x, y} }
+    const fn newu(x: usize, y: usize) -> XY { XY {x: x as i64, y: y as i64} }
 
     const fn add(&self, other: &XY) -> XY { XY { x: self.x + other.x, y: self.y + other.y } }
 }
@@ -42,15 +41,6 @@ impl Direction {
         DOWN,
         LEFT,
     ];
-
-    //const fn as_entry(&self) -> usize {
-    //    match self {
-    //        UP => 0,
-    //        RIGHT => 1,
-    //        DOWN => 2,
-    //        LEFT => 3,
-    //    }
-    //}
 
     const fn as_direction(&self) -> XY {
         match self {
@@ -151,63 +141,15 @@ impl Map {
         neighs
     }
 
-    fn multi_node_at(&self, at: &XY) -> &Node {
-        let max_x = self.width() as i64;
-        let max_y = self.height() as i64;
-
-        let x = if at.x >= 0 {
-            at.x % max_x
-        } else {
-            (max_x + (at.x % max_x)) % max_x
-        };
-
-        let y = if at.y >= 0 {
-            at.y % max_y
-        } else {
-            (max_y + (at.y % max_y)) % max_y
-        };
-        &self.nodes[y as usize][x as usize]
-    }
-
-    fn multi_neighbours(&self, at: &XY) -> Vec<XY> {
-        let mut neighs = Vec::new();
-        for d in &Direction::ALL {
-            let potential = at.add(&d.as_direction());
-            let node = self.multi_node_at(&potential);
-            if node.typ == Type::Rock {
-                continue;
-            }
-            neighs.push(potential);
-        }
-        neighs
-    }
-
-    fn find_all_in_dist(&self, goal_dist: i64) -> i64 {
-        let mut curr_round = 0;
-        let mut round_positions = HashSet::new();
-        round_positions.insert(self.start);
-
-        while curr_round < goal_dist {
-            curr_round += 1;
-            let positions: Vec<XY> = round_positions.into_iter().collect();
-            round_positions = HashSet::new();
-
-            for pos in positions {
-                for n in self.multi_neighbours(&pos) {
-                    round_positions.insert(n);
-                }
-            }
-        }
-        round_positions.len() as i64
-    }
-
-    #[allow(dead_code)]
-    fn bfs(&self, start: XY) -> Vec<Vec<i64>> {
+    fn bfs(&self, starts: &[XY]) -> Vec<Vec<i64>> {
         let mut dists = vec![vec![i64::MAX; self.width()]; self.height()];
 
         let mut queue = VecDeque::new();
-        queue.push_back((0, start));
-        dists[start.y as usize][start.x as usize] = 0;
+
+        for s in starts {
+            queue.push_back((0, s.clone()));
+            dists[s.y as usize][s.x as usize] = 0;
+        }
 
         while let Some((dist, pos)) = queue.pop_front() {
             if dist > dists[pos.y as usize][pos.x as usize] {
@@ -219,30 +161,6 @@ impl Map {
                     dists[n.y as usize][n.x as usize] = new_dist;
                     queue.push_back((new_dist, n));
                 }
-            }
-        }
-
-        dists
-    }
-
-    fn multi_bfs(&self, max: i64) -> HashMap<XY, i64> {
-        let mut dists = HashMap::new();
-
-        let mut queue = VecDeque::new();
-        queue.push_back((0, self.start));
-        dists.insert(self.start, 0);
-
-        while let Some((dist, pos)) = queue.pop_front() {
-            if dist > max {
-                continue;
-            }
-            let new_dist = dist + 1;
-            for n in self.multi_neighbours(&pos) {
-                if let Some(_) = dists.get(&n) {
-                    continue;
-                }
-                dists.insert(n, new_dist);
-                queue.push_back((new_dist, n));
             }
         }
 
@@ -265,17 +183,6 @@ fn print_dists(dists: &Vec<Vec<i64>>) {
     }
 }
 
-fn count_end_positions(dists: &HashMap<XY, i64>, mod_2: i64) -> i64 {
-    let mut count = 0;
-    for (_, &dist) in dists {
-        if dist % 2 == mod_2 {
-            count += 1;
-        }
-    }
-
-    count
-}
-
 fn count_end_positions_vec(dists: &Vec<Vec<i64>>, mod_2: i64, max: i64) -> i64 {
     let mut count = 0;
     for y in 0..dists.len() {
@@ -288,6 +195,122 @@ fn count_end_positions_vec(dists: &Vec<Vec<i64>>, mod_2: i64, max: i64) -> i64 {
     }
 
     count
+}
+
+fn solve_special_case(goal_steps: i64, map: &Map) -> i64 {
+    let init_distances = map.bfs(&vec![map.start]);
+
+    let len = map.width();
+    let mid = len / 2;
+
+    let l_mid_point = XY::newu(0, mid);
+    let r_mid_point = XY::newu(len - 1, mid);
+    let u_mid_point = XY::newu(mid, 0);
+    let d_mid_point = XY::newu(mid, len - 1);
+
+    let lu_corner_point = XY::newu(0, 0);
+    let ru_corner_point = XY::newu(len - 1, 0);
+    let ld_corner_point = XY::newu(0, len - 1);
+    let rd_corner_point = XY::newu(len - 1, len - 1);
+
+    let same_mod_2 = goal_steps % 2;
+    let inv_mod_2 = (same_mod_2 + 1) % 2;
+
+    let init_out = init_distances[l_mid_point.y as usize][l_mid_point.x as usize];
+
+    let remaining_steps = max(0, goal_steps - init_out);
+    let full_tiles_arm = max(0, remaining_steps / len as i64 - 1);
+    let has_edge = if init_out >= goal_steps { 0 } else { 1 };
+    let internal_edges = if has_edge == 1 { max(0, full_tiles_arm) } else { 0 };
+    let external_edges = if has_edge == 1 { internal_edges + 1 } else { 0 };
+
+
+    let even_tiles = if full_tiles_arm % 2 == 1 {
+        max(0, (full_tiles_arm) * (full_tiles_arm) - 1)
+    } else {
+        max(0, max(0, full_tiles_arm + 1) * max(0, full_tiles_arm + 1) - 1)
+    };
+    let odd_tiles = if full_tiles_arm % 2 == 1 {
+        max(0, max(0, full_tiles_arm + 1) * max(0, full_tiles_arm + 1))
+    } else {
+        max(0, (full_tiles_arm) * (full_tiles_arm))
+    };
+
+    //let odd_in_axis = (full_tiles_arm / 2) + (full_tiles_arm % 2);
+    //let even_in_axis = (full_tiles_arm / 2);
+
+    println!("full_tiles_arm: {}", full_tiles_arm);
+    println!("internal_edges: {}", internal_edges);
+    println!("external_edges: {}", external_edges);
+    println!("even_tiles: {}, odd_tiles: {}", even_tiles, odd_tiles);
+    println!("has_edge: {}", has_edge);
+
+    let left_dists =  map.bfs(&vec![r_mid_point]);
+    let right_dists = map.bfs(&vec![l_mid_point]);
+    let up_dists =    map.bfs(&vec![d_mid_point]);
+    let down_dists =  map.bfs(&vec![u_mid_point]);
+
+    let lu_dists = map.bfs(&vec![rd_corner_point]);
+    let ru_dists = map.bfs(&vec![ld_corner_point]);
+    let ld_dists = map.bfs(&vec![ru_corner_point]);
+    let rd_dists = map.bfs(&vec![lu_corner_point]);
+
+    let count_init_tile = count_end_positions_vec(&init_distances, same_mod_2, goal_steps + 1);
+
+    let count_even_tile = count_end_positions_vec(&left_dists, inv_mod_2, goal_steps + 1);
+    let count_odd_tile = count_end_positions_vec(&left_dists, same_mod_2, goal_steps + 1);
+
+    let mod_for_edge = if (full_tiles_arm + 1) % 2 == 1 {
+        // Ie. edge is an odd tile
+        same_mod_2
+    } else {
+        inv_mod_2 
+    };
+    let count_left_edge =  count_end_positions_vec(&left_dists, mod_for_edge, len as i64);
+    let count_right_edge = count_end_positions_vec(&right_dists, mod_for_edge, len as i64);
+    let count_up_edge =    count_end_positions_vec(&up_dists, mod_for_edge, len as i64);
+    let count_down_edge =  count_end_positions_vec(&down_dists, mod_for_edge, len as i64);
+
+    let internal_edges_starting_corner = full_tiles_arm * len as i64 + 1;
+    let steps_left_ie = goal_steps - internal_edges_starting_corner;
+    let intern_mod_2 = (goal_steps - steps_left_ie) % 2;
+
+    let count_lu_internal_edge = count_end_positions_vec(&lu_dists, intern_mod_2, steps_left_ie + 1);
+    let count_ru_internal_edge = count_end_positions_vec(&ru_dists, intern_mod_2, steps_left_ie + 1);
+    let count_ld_internal_edge = count_end_positions_vec(&ld_dists, intern_mod_2, steps_left_ie + 1);
+    let count_rd_internal_edge = count_end_positions_vec(&rd_dists, intern_mod_2, steps_left_ie + 1);
+
+    let steps_left_ee = steps_left_ie - len as i64;
+    let extern_mod_2 = (goal_steps - steps_left_ee) % 2;
+    println!("steps_left_ee: {}", steps_left_ee);
+    println!("extern_mod_2: {}", extern_mod_2);
+    let count_lu_external_edge = count_end_positions_vec(&lu_dists, extern_mod_2, steps_left_ee + 1);
+    let count_ru_external_edge = count_end_positions_vec(&ru_dists, extern_mod_2, steps_left_ee + 1);
+    let count_ld_external_edge = count_end_positions_vec(&ld_dists, extern_mod_2, steps_left_ee + 1);
+    let count_rd_external_edge = count_end_positions_vec(&rd_dists, extern_mod_2, steps_left_ee + 1);
+
+    println!("count_init_tile: {}", count_init_tile);
+    println!("count_even_tile: {}", count_even_tile);
+    println!("count_odd_tile: {}", count_odd_tile);
+
+    println!("left edge: {}", count_left_edge);
+    println!("count ld external: {}", count_ld_external_edge);
+
+    let result = count_init_tile +
+        even_tiles * count_even_tile +
+        odd_tiles * count_odd_tile +
+        (count_left_edge + count_right_edge + count_up_edge + count_down_edge) * has_edge +
+        count_lu_internal_edge * internal_edges +
+        count_ru_internal_edge * internal_edges +
+        count_ld_internal_edge * internal_edges +
+        count_rd_internal_edge * internal_edges +
+        count_lu_external_edge * external_edges +
+        count_ru_external_edge * external_edges +
+        count_ld_external_edge * external_edges +
+        count_rd_external_edge * external_edges +
+        0;
+
+    result
 }
 
 fn solve<R: BufRead, W: Write>(input: R, mut output: W) {
@@ -303,41 +326,7 @@ fn solve<R: BufRead, W: Write>(input: R, mut output: W) {
     let goal_steps = goal_steps;
 
     let map = Map::from_input(lines);
-    let ds = map.bfs(map.start);
-    //let ds = map.multi_bfs(goal_steps);
-    //
-    //writeln!(output, "{}", count_end_positions(&ds, goal_steps)).unwrap();
-    //print_dists(&ds);
-
-    // This works only for the input file.
-    let mid_dist = 65;
-    let len = 131;
-
-    let goal_mod_2 = goal_steps % 2;
-    let count_for_even = count_end_positions_vec(&ds, goal_mod_2, i64::MAX);
-    let count_for_odd = count_end_positions_vec(&ds, (goal_mod_2 + 1) % 2, i64::MAX);
-
-    let full_tiles_arm = (goal_steps - mid_dist) / len - 1;
-    let even_tiles = (full_tiles_arm) * (full_tiles_arm);
-    let odd_tiles = (full_tiles_arm + 1) * (full_tiles_arm + 1);
-
-    // Modality is because full_tiles_arm + 1 % 2 == 0
-    let count_edge_left = count_end_positions_vec(&map.bfs(XY::new(130, 65)), (goal_mod_2 + 1) % 2, len);
-    let count_edge_up = count_end_positions_vec(&map.bfs(XY::new(65, 130)), (goal_mod_2 + 1) % 2, len);
-    let count_edge_right = count_end_positions_vec(&map.bfs(XY::new(0, 65)), (goal_mod_2 + 1) % 2, len);
-    let count_edge_down = count_end_positions_vec(&map.bfs(XY::new(65, 0)), (goal_mod_2 + 1) % 2, len);
-    println!("count_for_even: {}", count_for_even);
-    println!("count_for_odd: {}", count_for_odd);
-    println!("count_edge_left: {}", count_edge_left);
-    println!("count_edge_up: {}", count_edge_up);
-    println!("count_edge_right: {}", count_edge_right);
-    println!("count_edge_down: {}", count_edge_down);
-    let edge_tiles = full_tiles_arm * 4;
-
-    let result = odd_tiles * count_for_odd  + even_tiles * count_for_even +
-        count_edge_down + count_edge_up + count_edge_left + count_edge_right +
-        (edge_tiles - 4) * count_edge_up;
-    println!("Result: {}", result);
+    writeln!(output, "{}", solve_special_case(goal_steps, &map)).unwrap();
 }
 
 pub fn main() {
@@ -360,135 +349,122 @@ mod tests {
     }
 
     #[test]
-    fn sample0() {
+    fn just_init() {
         test_ignore_whitespaces(
-            "6
-            ...........
-            .....###.#.
-            .###.##..#.
-            ..#.#...#..
-            ....#.#....
-            .##..S####.
-            .##..#...#.
-            .......##..
-            .##.#.####.
-            .##..##.##.
-            ...........",
-            "16",
+            "1
+            .....
+            .....
+            ..S..
+            .....
+            .....",
+            "4",
+        );
+        test_ignore_whitespaces(
+            "1
+            .....
+            ..#..
+            ..S..
+            .....
+            .....",
+            "3",
+        );
+        test_ignore_whitespaces(
+            "2
+            .....
+            .....
+            ..S..
+            .....
+            .....",
+            "9",
         );
     }
 
     #[test]
-    fn sample1() {
+    fn init_and_edge() {
+        test_ignore_whitespaces(
+            "4
+            ...
+            .S.
+            ...",
+            "25",
+        );
+    }
+
+
+    #[test]
+    fn init_edge_full() {
+        test_ignore_whitespaces(
+            "12
+            .....
+            .....
+            ..S..
+            .....
+            .....",
+            "169",
+        );
+        test_ignore_whitespaces(
+            "12
+            .....
+            .#.#.
+            ..S..
+            .#.#.
+            .....",
+            "133",
+        );
+        test_ignore_whitespaces(
+            "12
+            .....
+            ...#.
+            ..S..
+            .#.#.
+            .....",
+            "142",
+        );
+    }
+
+    #[test]
+    fn init_edge_2full() {
+        test_ignore_whitespaces(
+            "17
+            .....
+            .....
+            ..S..
+            .....
+            .....",
+            "324",
+        );
+        //test_ignore_whitespaces(
+        //    "12
+        //    .....
+        //    .#.#.
+        //    ..S..
+        //    .#.#.
+        //    .....",
+        //    "133",
+        //);
+        //test_ignore_whitespaces(
+        //    "12
+        //    .....
+        //    ...#.
+        //    ..S..
+        //    .#.#.
+        //    .....",
+        //    "142",
+        //);
+    }
+
+    #[test]
+    fn random() {
         test_ignore_whitespaces(
             "10
-            ...........
-            .....###.#.
-            .###.##..#.
-            ..#.#...#..
-            ....#.#....
-            .##..S####.
-            .##..#...#.
-            .......##..
-            .##.#.####.
-            .##..##.##.
-            ...........",
-            "50",
-        );
-    }
-    
-    #[test]
-    fn sample2() {
-        test_ignore_whitespaces(
-            "50
-            ...........
-            .....###.#.
-            .###.##..#.
-            ..#.#...#..
-            ....#.#....
-            .##..S####.
-            .##..#...#.
-            .......##..
-            .##.#.####.
-            .##..##.##.
-            ...........",
-            "1594",
-        );
-    }
-    
-    #[test]
-    fn sample3() {
-        test_ignore_whitespaces(
-            "100
-            ...........
-            .....###.#.
-            .###.##..#.
-            ..#.#...#..
-            ....#.#....
-            .##..S####.
-            .##..#...#.
-            .......##..
-            .##.#.####.
-            .##..##.##.
-            ...........",
-            "6536",
-        );
-    }
-
-    #[test]
-    fn sample4() {
-        test_ignore_whitespaces(
-            "500
-            ...........
-            .....###.#.
-            .###.##..#.
-            ..#.#...#..
-            ....#.#....
-            .##..S####.
-            .##..#...#.
-            .......##..
-            .##.#.####.
-            .##..##.##.
-            ...........",
-            "167004",
-        );
-    }
-
-    #[test]
-    fn sample5() {
-        test_ignore_whitespaces(
-            "1000
-            ...........
-            .....###.#.
-            .###.##..#.
-            ..#.#...#..
-            ....#.#....
-            .##..S####.
-            .##..#...#.
-            .......##..
-            .##.#.####.
-            .##..##.##.
-            ...........",
-            "668697",
-        );
-    }
-
-    #[test]
-    fn sample6() {
-        test_ignore_whitespaces(
-            "5000
-            ...........
-            .....###.#.
-            .###.##..#.
-            ..#.#...#..
-            ....#.#....
-            .##..S####.
-            .##..#...#.
-            .......##..
-            .##.#.####.
-            .##..##.##.
-            ...........",
-            "16733044",
+            .......
+            .......
+            .......
+            ...S...
+            .......
+            .......
+            .......",
+            "121",
         );
     }
 }
