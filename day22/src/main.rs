@@ -1,6 +1,6 @@
-mod slabs;
+mod slabs2;
 
 
 fn main() {
-    slabs::main();
+    slabs2::main();
 }
