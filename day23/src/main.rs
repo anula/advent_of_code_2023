@@ -1,6 +1,6 @@
-mod walk;
+mod walk2;
 
 
 fn main() {
-    walk::main();
+    walk2::main();
 }
