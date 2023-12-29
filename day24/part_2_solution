@@ -1,0 +1,16 @@
+Solution to part 2 is a bit of a mess. There are two solutions in this repo.
+
+One (hail2.py) works once you have a proper values for the velocity, otherwise
+it is too slow to find the right velocity by itself (there might be a bug in
+velocity generator code).
+
+We found the right velocity with a different method, that I didn't code (gradient
+descent over function that takes all times, starting point and velocity and
+returns sum of squares of distances from square to each of the hails at its time).
+The code in this repo allowed us to find the right starting point.
+
+Then there is hail2.ipynb (Jupiter notebook). This one starts with the first
+solution, but in the last few code cells it explores a different solution using
+SymPy library. This one I explored only after we solved it together with another
+person in the first way. But it requires ony a few lines of code and finishes in
+~0.1s so seems a bit better ;).
